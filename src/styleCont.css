@@ -1,0 +1,92 @@
+.life-counter-container {
+  position: fixed;
+  bottom: 20px;
+  right: 15px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  background: #009DFF;
+  border-radius: 5px;
+  padding: 5px;
+  z-index: 100;
+  -webkit-box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.life-counter {
+  color: white;
+  font-size: 22px;
+  font-weight: bold;
+  margin: 0 15px;
+  min-width: 50px;
+  text-align: center;
+  -webkit-transition: all 0.3s ease;
+  transition: all 0.3s ease;
+}
+
+.life-counter.low {
+  color: #FFC107;
+  text-shadow: 0 0 5px rgba(255, 193, 7, 0.5);
+}
+
+.life-counter.critical {
+  color: #F44336;
+  text-shadow: 0 0 5px rgba(244, 67, 54, 0.5);
+  -webkit-animation: pulse 0.8s infinite alternate;
+          animation: pulse 0.8s infinite alternate;
+}
+
+.life-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  font-size: 24px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  cursor: pointer;
+  -webkit-transition: all 0.2s ease;
+  transition: all 0.2s ease;
+}
+
+.life-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  -webkit-transform: scale(1.1);
+          transform: scale(1.1);
+}
+
+.life-btn:active {
+  -webkit-transform: scale(0.95);
+          transform: scale(0.95);
+}
+
+@-webkit-keyframes pulse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.7;
+  }
+}
+
+@keyframes pulse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.7;
+  }
+}
+/*# sourceMappingURL=styleCont.css.map */

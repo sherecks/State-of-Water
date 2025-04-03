@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <link rel="shortcut icon" href="Images/favicon.png" type="image/x-icon">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+
+        <link rel="stylesheet" href="src/style.css" />
+        <link rel="stylesheet" href="src/styleCont.css" />
+
+        <title>State of Water</title>
+    </head>
+
+    <body>
+        <h1>State of Water</h1>
+        
+        <div class="game-area" id="gameArea">
+            <div class="container">
+                <div><button id="deck">DECK</button></div>
+
+                <div class="life-counter-container">
+                    <button id="decreaseLife" class="life-btn">-</button>
+                    <div id="lifeCounter" class="life-counter">30</div>
+                    <button id="increaseLife" class="life-btn">+</button>
+                </div>
+
+                <div class="controls">
+                    <div>
+                        <button id="rollCard">Girar</button>
+                        <button id="openGame">Abrir Jogo</button>
+                        <button id="shuffleDeck">Embaralhar</button>
+                        <button id="deleteSelectedCard">Excluir Carta</button>
+                        <button id="openAllCards">Ver Deck</button>
+                        <button id="resetTable">Limpar Mesa</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </body>
+
+    <script type="text/javascript" src="vanilla-tilt.js"></script>
+
+    <script type="module">
+        // Importar o módulo do jogo
+        import { initGame } from './engine.js';
+        
+        // Inicializar o jogo
+        initGame();
+    </script>
+
+    <!-- Script para o contador -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const lifeCounter = document.getElementById('lifeCounter');
+            const decreaseBtn = document.getElementById('decreaseLife');
+            const increaseBtn = document.getElementById('increaseLife');
+            let currentLife = 30;
+            
+            // Função para atualizar o valor do contador e sua aparência
+            function updateLifeCounter() {
+                lifeCounter.textContent = currentLife;
+                
+                // Atualizar cor baseado no valor de vida
+                if (currentLife <= 5) {
+                    lifeCounter.className = 'life-counter critical';
+                } else if (currentLife <= 10) {
+                    lifeCounter.className = 'life-counter low';
+                } else {
+                    lifeCounter.className = 'life-counter';
+                }
+            }
+            
+            // Evento para diminuir a vida
+            decreaseBtn.addEventListener('click', function() {
+                if (currentLife > 0) {
+                    currentLife--;
+                    updateLifeCounter();
+                }
+            });
+            
+            // Evento para aumentar a vida
+            increaseBtn.addEventListener('click', function() {
+                if (currentLife < 30) {
+                    currentLife++;
+                    updateLifeCounter();
+                }
+            });
+        });
+    </script>
+
+</html>
