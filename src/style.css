@@ -196,6 +196,10 @@ button:hover {
 }
 
 /* Estilos para o overlay e modal de seleção de deck */
+.multi-select-mode {
+  cursor: pointer;
+}
+
 .overlay {
   position: fixed;
   top: 0;
@@ -250,7 +254,7 @@ button:hover {
 }
 
 .deck-option-img {
-  width: 48%;
+  width: 24%;
   border: 2px solid transparent;
   border-color: #007bff;
   border-radius: 8px;

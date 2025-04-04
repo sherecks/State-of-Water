@@ -1,5 +1,5 @@
 // Importar a lista de imagens das cartas
-import { Deck1, Deck2 } from './decks.js';
+import { Deck1, Deck2, Deck3 } from './decks.js';
 import { preloadDeckImages, preloadedImages } from './preload.js';
 
 // Variáveis globais
@@ -13,6 +13,9 @@ let dragOffsetX = 0;
 let dragOffsetY = 0;
 let currentCardIndex = 0; // Índice para controlar a ordem das cartas
 let selectedDeck = null;
+
+let selectedCards = []; // Array para armazenar múltiplas cartas selecionadas
+let isMultiSelectMode = false; // Controle de modo de seleção múltipla
 
 
 // FUNÇÕES PARA SELEÇÃO DO DECK!!!
@@ -29,6 +32,10 @@ function selectDeck(deckId) {
         // Importar o Deck2
         cardImages = Deck2;
         selectedDeck = 'deck2';
+    } else if (deckId === 'deck3') {
+        // Importar o Deck2
+        cardImages = Deck3;
+        selectedDeck = 'deck3';
     }
     
     // Habilitar o botão de confirmação
@@ -66,7 +73,8 @@ function initDeckSelector() {
     // Adicionar opções de deck
     const decks = [
         { id: 'deck1', name: 'Maluk', image: 'Images/Cartas/CAPA.png' },
-        { id: 'deck2', name: 'Sumba', image: 'Images/Cartas2/CAPA.png' }
+        { id: 'deck2', name: 'Sumba', image: 'Images/Cartas2/CAPA.png' },
+        { id: 'deck3', name: 'Skull', image: 'Images/Cartas3/CAPA.png' },
     ];
     
     decks.forEach(deck => {
@@ -76,6 +84,7 @@ function initDeckSelector() {
         deckOption.src = deck.image;
         deckOption.alt = deck.name;
         deckOption.title = deck.name;
+
         
         // Adicionar evento de clique
         deckOption.addEventListener('click', () => {
@@ -87,7 +96,9 @@ function initDeckSelector() {
         });
         
         decksContainer.appendChild(deckOption);
+
     });
+    
     
     modal.appendChild(decksContainer);
     
@@ -115,7 +126,7 @@ function initDeckSelector() {
 // INICIAR A UI DO JOGO INTEIRO!!!
 export function initGame() {
     // Iniciar com o pré-carregamento das imagens
-    preloadDeckImages([Deck1, Deck2], () => {
+    preloadDeckImages([Deck1, Deck2, Deck3], () => {
         // Após o carregamento, iniciar o seletor de deck
         initDeckSelector();
         
@@ -127,6 +138,9 @@ export function initGame() {
             if (selectedCard) {
                 rollCard(selectedCard);
             }
+            cards.forEach(card => {
+                card.addEventListener('mousedown', selectCard);
+            });
         });
         
         // Abrir jogo - distribuir as cartas sem embaralhar as imagens
@@ -166,17 +180,56 @@ export function initGame() {
         });
         
         // Remover seleção ao clicar na área de jogo
-        gameArea.addEventListener('click', () => {
-            if (selectedCard) {
-                selectedCard.classList.remove('selected');
+        gameArea.addEventListener('click', (e) => {
+            // Só limpe a seleção se não estiver segurando Ctrl
+            if (!e.ctrlKey) {
+                selectedCards.forEach(card => {
+                    card.classList.remove('selected');
+                });
+                selectedCards = [];
                 selectedCard = null;
             }
         });
+
+        // Empilhar todas as cartas
+        document.getElementById('stackAllCards').addEventListener('click', () => {
+            stackAllCards();
+        });
+
+        disableRightClick();
         
         // Mover carta com o mouse
         document.addEventListener('mousemove', moveCard);
         document.addEventListener('mouseup', stopDrag);
+        document.addEventListener('DOMContentLoaded', disableRightClick);
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keyup', handleKeyUp);
     });
+}
+
+// Funções para lidar com teclas
+function handleKeyDown(e) {
+    if (e.key === 'Control') {
+        document.body.classList.add('multi-select-mode');
+    }
+}
+
+function handleKeyUp(e) {
+    if (e.key === 'Control') {
+        document.body.classList.remove('multi-select-mode');
+    }
+}
+
+// Desabilitar Botão Direito
+function disableRightClick() {
+    // Adicionar event listener para o documento inteiro
+    document.addEventListener('contextmenu', function(e) {
+        // Prevenir o comportamento padrão do clique direito
+        e.preventDefault();
+        
+        return false; // Retornar falso para garantir que o menu não apareça
+    });
+    
 }
 
 // INICIA O JOGO, 5 CARTAS DO DECK EMBARALHADAS E COLOCADAS NA GAME AREA!!!
@@ -206,7 +259,6 @@ function iniciarJogo() {
         card.style.top = (100 + i * 20) + 'px';
         currentCardIndex++;
         
-        // Virar as cartas para baixo imediatamente após a criação
         flipCard(card);
     }
 }
@@ -249,10 +301,9 @@ function createCard(imagePath) {
 
     setTimeout(() => {
         initializeVanillaTilt(card);
-    }, 100);
+    }, 200);
     
     return card;
-
 }
 
 function initializeVanillaTilt(card) {
@@ -280,8 +331,7 @@ function createNextCard() {
         card.style.top = (100 + index * 20) + 'px';
         
         currentCardIndex++;
-        
-        // Virar a carta para baixo imediatamente após a criação
+
         flipCard(card);
     }
 }
@@ -300,6 +350,17 @@ function startDrag(e) {
     dragOffsetY = e.clientY - rect.top;
     
     this.style.zIndex = zCounter++;
+
+    // Adicione isso nas funções que incrementam zCounter
+    if (zCounter > 1000) {
+        zCounter = 10; 
+        
+        // Reorganizar os z-indexes de todas as cartas
+        cards.sort((a, b) => parseInt(a.style.zIndex) - parseInt(b.style.zIndex))
+            .forEach((card, index) => {
+                card.style.zIndex = index + 10;
+        });
+    }
     
     e.preventDefault();
 }
@@ -325,16 +386,56 @@ function stopDrag() {
     isDragging = false;
 }
 
-// Selecionar carta
 function selectCard(e) {
-    // Remover seleção anterior
-    if (selectedCard) {
-        selectedCard.classList.remove('selected');
-    }
+    // Prevenir comportamento padrão para evitar problemas com o botão direito
+    e.preventDefault();
     
-    selectedCard = this;
-    selectedCard.classList.add('selected');
-    selectedCard.style.zIndex = zCounter++;
+    // Verificar se a tecla Ctrl está pressionada
+    isMultiSelectMode = e.ctrlKey;
+    
+    // Verificar se este é um clique com botão esquerdo (botão 0)
+    if (e.button === 0) {
+        if (isMultiSelectMode) {
+            // Modo de seleção múltipla com Ctrl + clique esquerdo
+            if (this.classList.contains('selected')) {
+                // Se a carta já estiver selecionada, remova-a da seleção
+                this.classList.remove('selected');
+                const index = selectedCards.indexOf(this);
+                if (index !== -1) {
+                    selectedCards.splice(index, 1);
+                }
+            } else {
+                // Adiciona a carta à seleção múltipla
+                this.classList.add('selected');
+                selectedCards.push(this);
+                this.style.zIndex = zCounter++;
+            }
+        } else {
+            // Modo de seleção única (apenas clique esquerdo)
+            // Remover seleção de todas as cartas
+            selectedCards.forEach(card => {
+                card.classList.remove('selected');
+            });
+            selectedCards = [];
+            
+            // Selecionar apenas a carta atual
+            selectedCard = this;
+            selectedCard.classList.add('selected');
+            selectedCard.style.zIndex = zCounter++;
+            selectedCards.push(selectedCard);
+        }
+        
+        // Controle do z-index
+        if (zCounter > 1000) {
+            zCounter = 10; // Resetar para um valor baixo
+            
+            // Reorganizar os z-indexes de todas as cartas
+            Array.from(cards).sort((a, b) => parseInt(a.style.zIndex || 0) - parseInt(b.style.zIndex || 0))
+                .forEach((card, index) => {
+                    card.style.zIndex = index + 10;
+                });
+        }
+    }
     
     e.stopPropagation();
 }
@@ -360,7 +461,7 @@ function flipCard(card) {
 
     setTimeout(() => {
         initializeVanillaTilt(card);
-    }, 100);
+    }, 200);
 }
 
 // Função para abrir todas as cartas
@@ -392,8 +493,19 @@ function openAllCards() {
 
 // Embaralhar todas as cartas na mesa
 function shuffleCards() {
-    // Vamos embaralhar as imagens das cartas, não as cartas em si
-    const availableImages = [...cardImages.map(card => card.url)]; // Criar uma cópia do array original
+    if (cards.length === 0) return; // Não fazer nada se não houver cartas
+    
+    // Desativar botões durante a animação
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(btn => btn.disabled = true);
+    
+    // Remover possíveis seleções
+    selectedCards.forEach(card => card.classList.remove('selected'));
+    selectedCards = [];
+    selectedCard = null;
+    
+    // Vamos embaralhar as imagens das cartas
+    const availableImages = [...cardImages.map(card => card.url)];
     
     // Embaralhar o array de imagens
     for (let i = availableImages.length - 1; i > 0; i--) {
@@ -401,45 +513,169 @@ function shuffleCards() {
         [availableImages[i], availableImages[j]] = [availableImages[j], availableImages[i]];
     }
     
-    // Distribuir as cartas pela mesa em formato de leque, como no iniciarJogo
-    cards.forEach((card, index) => {
-        // Se há imagens disponíveis, atribuir uma nova imagem à carta
-        if (index < availableImages.length && card.dataset.faceUp === 'true') {
-            const newImagePath = availableImages[index];
-            
-            // Atualizar o dataset e a imagem exibida
-            card.dataset.imagePath = newImagePath;
-            card.innerHTML = '';
-            const img = document.createElement('img');
-            img.src = newImagePath;
-            img.alt = 'Carta';
-            card.appendChild(img);
+    // Obter dimensões da área de jogo
+    const gameArea = document.getElementById('gameArea');
+    const gameAreaRect = gameArea.getBoundingClientRect();
+    const centerX = gameAreaRect.width / 2 - 80; // Metade da largura da carta
+    const centerY = gameAreaRect.height / 2 - 110; // Metade da altura da carta
+    
+    // Iniciar sequência de animação
+    
+    // 1. Destruir VanillaTilt em todas as cartas antes da animação
+    cards.forEach(card => {
+        if (card.vanillaTilt) {
+            card.vanillaTilt.destroy();
         }
-
-        // Manter as cartas no formato de leque inicial
-        card.style.transition = "left 0.8s, top 0.8s, transform 0.8s";
-        card.style.left = (100 + index * 100) + 'px';
-        card.style.top = (100 + index * 0) + 'px';
-        
-        card.style.zIndex = index + zCounter;
-        
-        // Remover a transição após a animação
-        setTimeout(() => {
-            card.style.transition = "transform 0.1s";
-        }, 800);
-
-        flipCard(card);
     });
     
-    // Incrementar o zCounter para próximas operações
-    zCounter += cards.length;
+    // 2. Virar todas as cartas para baixo primeiro (se estiverem viradas para cima)
+    const flipPromises = cards.map((card, index) => {
+        return new Promise(resolve => {
+            setTimeout(() => {
+                if (card.dataset.faceUp === 'true') {
+                    flipCard(card);
+                }
+                resolve();
+            }, index * 50); // Pequeno atraso entre cada carta
+        });
+    });
+    
+    // 3. Após virar todas, mover para o centro em pilha
+    Promise.all(flipPromises).then(() => {
+        const moveToMiddlePromises = cards.map((card, index) => {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    // Adicionar transição suave
+                    card.style.transition = "left 0.5s, top 0.5s";
+                    
+                    // Posições aleatórias próximas ao centro
+                    const randomOffsetX = Math.random() * 20 - 10;
+                    const randomOffsetY = Math.random() * 20 - 10;
+                    
+                    // Mover para o centro com pequeno offset aleatório
+                    card.style.left = (centerX + randomOffsetX) + 'px';
+                    card.style.top = (centerY + randomOffsetY) + 'px';
+                    card.style.zIndex = 1000 + index; // Empilhar
+                    
+                    // Resolver após a animação terminar
+                    setTimeout(resolve, 500);
+                }, index * 30);
+            });
+        });
+        
+        // 4. Depois que todas as cartas estiverem no centro, fazer animação de embaralhamento
+        return Promise.all(moveToMiddlePromises);
+    }).then(() => {
+        // Animação de embaralhamento: mover rapidamente em direções aleatórias
+        return new Promise(resolve => {
+            // Número de movimentos de embaralhamento
+            const shuffleMoves = 3;
+            let moveCount = 0;
+            
+            const shuffleInterval = setInterval(() => {
+                cards.forEach(card => {
+                    // Transição mais rápida para movimentos de embaralhamento
+                    card.style.transition = "left 0.15s, top 0.15s";
+                    
+                    // Movimento aleatório ao redor do centro
+                    const randomOffsetX = Math.random() * 60 - 30;
+                    const randomOffsetY = Math.random() * 60 - 30;
+                    
+                    card.style.left = (centerX + randomOffsetX) + 'px';
+                    card.style.top = (centerY + randomOffsetY) + 'px';
+                    
+                    // Randomizar z-index para simular cartas passando por cima umas das outras
+                    card.style.zIndex = 1000 + Math.floor(Math.random() * cards.length);
+                });
+                
+                moveCount++;
+                if (moveCount >= shuffleMoves) {
+                    clearInterval(shuffleInterval);
+                    resolve();
+                }
+            }, 200);
+        });
+    }).then(() => {
+        // 5. Distribua as cartas em formato de leque
+        return new Promise(resolve => {
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    // Transição suave para distribuição
+                    card.style.transition = "left 0.8s, top 0.8s, transform 0.8s";
+                    
+                    // Atualizar imagem da carta se estiver virada para cima
+                    if (index < availableImages.length && card.dataset.faceUp === 'false') {
+                        const newImagePath = availableImages[index];
+                        card.dataset.imagePath = newImagePath;
+                    }
+                    
+                    // Distribuir em formato de leque
+                    const fanSpacing = Math.min(100, (gameAreaRect.width - 300) / Math.max(1, cards.length - 1));
+                    card.style.left = (100 + index * fanSpacing) + 'px';
+                    card.style.top = '100px';
+                    card.style.zIndex = index + 10;
+                    
+                    // Pequena rotação para efeito de leque
+                    const rotationAngle = (index - (cards.length - 1) / 2) * 2;
+                    card.style.transform = `rotate(${rotationAngle}deg)`;
+                    
+                }, index * 80);
+            });
+            
+            // Resolver após a última carta ser distribuída
+            setTimeout(resolve, cards.length * 80 + 800);
+        });
+    }).then(() => {
+        // 6. Virar as cartas para cima
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                if (card.dataset.faceUp === 'false') {
+                    flipCard(card);
+                }
+                
+                // Após virar, inicializar VanillaTilt
+                setTimeout(() => {
+                    initializeVanillaTilt(card);
+                }, 200);
+            }, index * 100);
+        });
+        
+        // Reabilitar botões depois que todas as animações terminarem
+        setTimeout(() => {
+            buttons.forEach(btn => btn.disabled = false);
+            
+            // Gerenciar o zCounter
+            if (zCounter > 1000) {
+                zCounter = 10; // Resetar para um valor baixo
+                
+                // Reorganizar os z-indexes de todas as cartas
+                cards.sort((a, b) => parseInt(a.style.zIndex) - parseInt(b.style.zIndex))
+                    .forEach((card, index) => {
+                        card.style.zIndex = index + 10;
+                    });
+            } else {
+                // Incrementar o zCounter para próximas operações
+                zCounter += cards.length;
+            }
+        }, cards.length * 100 + 500);
+    });
 }
 
 // Limpar a mesa
 function resetTable() {
+
     cards.forEach(card => {
         card.remove();
     });
+
+    // Na função resetTable:
+    cards.forEach(card => {
+        if (card.vanillaTilt) {
+            card.vanillaTilt.destroy();
+        }
+        card.remove();
+    });
+
     cards = [];
     selectedCard = null;
     cardCount = 0;
@@ -493,9 +729,20 @@ function openGame() {
 
 } 
 
-// Girar a carta em 90°
-function rollCard(card) {
+function rollCard() {
+    // Se estiver no modo de seleção múltipla, gire todas as cartas selecionadas
+    if (selectedCards.length > 0) {
+        selectedCards.forEach(card => {
+            rollSingleCard(card);
+        });
+    } else if (selectedCard) {
+        // Comportamento original para uma única carta
+        rollSingleCard(selectedCard);
+    }
+}
 
+// Função auxiliar para girar uma única carta
+function rollSingleCard(card) {
     if (card.vanillaTilt) {
         card.vanillaTilt.destroy();
     }
@@ -512,13 +759,65 @@ function rollCard(card) {
     // Salva o novo ângulo na carta
     card.setAttribute("data-angle", currentAngle);
 
-    if ( currentAngle == 0 ){
+    if (currentAngle == 0) {
         setTimeout(() => {
             initializeVanillaTilt(card);
-        }, 50);
+        }, 200);
     }
-
 }
+
+// Função para empilhar todas as cartas no canto inferior esquerdo
+function stackAllCards() {
+    if (cards.length === 0) return; // Não fazer nada se não houver cartas
+    
+    // Obter a área de jogo e suas dimensões
+    const gameArea = document.getElementById('gameArea');
+    const gameAreaRect = gameArea.getBoundingClientRect();
+    
+    // Definir a posição do monte no canto inferior esquerdo
+    const stackX = 20;
+    const stackY = gameAreaRect.height - 240;
+    
+    // Remover seleção de todas as cartas
+    selectedCards.forEach(card => card.classList.remove('selected'));
+    selectedCards = [];
+    selectedCard = null;
+    
+    // Desativar VanillaTilt para todas as cartas
+    cards.forEach(card => {
+        if (card.vanillaTilt) {
+            card.vanillaTilt.destroy();
+        }
+    });
+    
+    // Empilhar as cartas com um pequeno deslocamento
+    cards.forEach((card, index) => {
+        // Adicionar transição suave
+        card.style.transition = "left 0.4s, top 0.4s";
+        
+        // Pequeno deslocamento entre cartas na pilha
+        const offsetX = index * 1;
+        const offsetY = index * 1;
+        
+        // Posicionar na pilha
+        card.style.left = (stackX + offsetX) + 'px';
+        card.style.top = (stackY - offsetY) + 'px';
+        
+        // Definir z-index para empilhamento correto
+        card.style.zIndex = 100 + index;
+    });
+    
+    // Reativar VanillaTilt após um pequeno atraso
+    setTimeout(() => {
+        cards.forEach(card => {
+            initializeVanillaTilt(card);
+        });
+    }, 500);
+    
+    // Atualizar o zCounter
+    zCounter = 100 + cards.length;
+}
+
 
 
 
