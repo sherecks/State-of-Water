@@ -15,7 +15,6 @@ let currentCardIndex = 0; // Índice para controlar a ordem das cartas
 let selectedDeck = null;
 
 let selectedCards = []; // Array para armazenar múltiplas cartas selecionadas
-let isMultiSelectMode = false; // Controle de modo de seleção múltipla
 
 
 // FUNÇÕES PARA SELEÇÃO DO DECK!!!
@@ -264,7 +263,6 @@ export function initGame() {
         document.addEventListener('mousemove', moveCard);
         document.addEventListener('mouseup', stopDrag);
         document.addEventListener('DOMContentLoaded', disableRightClick);
-
     });
 }
 
@@ -315,11 +313,10 @@ function iniciarJogo() {
             flipCard(card);
         }
     });
-
     cards.forEach(card => {
         setTimeout(() => {
             openGame(card);
-        }, 300);
+        }, 400);
     });
 }
 
@@ -388,8 +385,6 @@ function createCard(imagePath) {
 }
 
 function initializeVanillaTilt(card) {
-    
-    // Inicializar VanillaTilt com as configurações desejadas
     VanillaTilt.init(card, {
         max: 10,
         glare: true,
@@ -397,9 +392,9 @@ function initializeVanillaTilt(card) {
         scale: 1,
         speed: 2000,
         perspective: 1000,
-        transition: true,   // Garante transição suave
-        easing: "cubic-bezier(.03,.98,.52,.99)",  // Curva de suavização
-        gyroscope: true     // Adiciona suporte a giroscópio se disponível
+        transition: true, 
+        easing: "cubic-bezier(.03,.98,.52,.99)",  
+        gyroscope: true    
     });
 }
 
@@ -521,10 +516,6 @@ function selectCard(e) {
 
 // Virar carta
 function flipCard(card) {
-
-    if (card.vanillaTilt) {
-        card.vanillaTilt.settings.scale = 1;
-    }
 
     if (card.dataset.faceUp === 'true') {
         card.dataset.faceUp = 'false';
@@ -799,7 +790,13 @@ function openGame() {
     cards.forEach((card, index) => {
         setTimeout(() => {
             if (card.dataset.faceUp === 'false') {
+                // Destruir VanillaTilt antes de virar a carta
+                if (card.vanillaTilt) {
+                    card.vanillaTilt.destroy();
+                }
                 flipCard(card);
+                // Reinicializar VanillaTilt após virar a carta
+                initializeVanillaTilt(card);
             }
         }, index * 80);
         
