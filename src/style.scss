@@ -224,3 +224,103 @@ button:hover {
     background-color: #007bff;
     cursor: not-allowed;
 }
+
+/* Add these media queries to the end of your existing CSS */
+
+/* Small devices (phones) */
+@media only screen and (max-width: 576px) {
+    .game-area {
+        height: 85vh;
+    }
+    
+    .card {
+        width: 100px; /* Smaller cards for mobile */
+    }
+    
+    .deck {
+        width: 45px;
+    }
+    
+    .container {
+        flex-direction: column;
+    }
+    
+    .controls {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    button {
+        padding: 0px;
+        font-size: 0.8em;
+    }
+    
+    .deck-option-img {
+        width: 48%; 
+        margin-bottom: 10px;
+    }
+}
+
+/* Medium devices (tablets) */
+@media only screen and (min-width: 577px) and (max-width: 768px) {
+    .game-area {
+        height: 90vh;
+    }
+    
+    .card {
+        width: 115px; /* Medium sized cards for tablets */
+    }
+    
+    .deck {
+        width: 50px;
+    }
+    
+    .deck-option-img {
+        width: 32%; /* 3 decks per row on tablets */
+    }
+}
+
+/* Large devices (desktops) */
+@media only screen and (min-width: 769px) and (max-width: 1280px) {
+    .card {
+        width: 125px;
+    }
+    
+
+}
+
+/* Landscape orientation adjustments */
+@media only screen and (max-height: 500px) and (orientation: landscape) {
+    .game-area {
+        height: 80vh;
+    }
+
+    .card {
+        width: 115px; /* Medium sized cards for tablets */
+    }
+    
+    .container {
+        margin-bottom: 5px;
+    }
+    
+    .controls {
+        margin-bottom: 5px;
+    }
+    
+    .deck-selector-modal {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+}
+
+/* Print styles */
+@media print {
+    .game-area {
+        background-image: none;
+        border: 1px solid #000;
+    }
+    
+    button, .deck, .controls {
+        display: none;
+    }
+}
